@@ -13,16 +13,58 @@ router.get("/workouts", (req, res) => {
     });
 })
 
+// GET aggregate
+router.get('/workouts', (req, res) => {
+     Workout.aggregate([
+         {
+             $addFields: {
+                 totalDuration: {
+                     $sum: '$exercises.duration',
+                 },
+             },
+         },
+     ])
+         .then((dbWorkouts) => {
+             res.json(dbWorkouts);
+         })
+         .catch((err) => {
+             res.json(err);
+         });
+ });
+
+// GET workout ID
+router.get("/workouts/:id", (req, res) => {
+    Workout.findById({
+      _id: req.params.id
+    })
+      .then((dbWorkout) => {
+        res.json(dbWorkout);
+      })
+      .catch((err) => {
+        res.status(400).json(err);
+      });
+  });
+
 // GET Workouts Range
 router.get("/workouts/range", (req, res) => {
-    db.Workout.find({})
-    .sort({ date: -1 })
-    .then((workoutRangeData) => {
-        res.json(workoutRangeData)
-    })
-    .catch(err => {
-        res.status(400).json(err);
-    });
+    Workout.aggregate([
+        {
+            $addFields: {
+                totalDuration: {
+                    $sum: '$exercises.duration',
+                },
+            },
+        },
+    ])
+        .sort({ day: -1 })
+        .limit(7)
+        .sort({ day: 1 })
+        .then((dbWorkouts) => {
+            res.json(dbWorkouts);
+        })
+        .catch((err) => {
+            res.json(err);
+        });
 })
 
 // POST - Create workout
@@ -33,7 +75,7 @@ router.post("/workouts", ({body}, res) => {
     })
 })
 
-// PUT - Add exercise to db
+// PUT - Add exercise to workout
 router.put("/workouts/:id", (req, res) => {
     db.Workout.findOneAndUpdate(
         { _id: req.params.id },
@@ -42,16 +84,19 @@ router.put("/workouts/:id", (req, res) => {
             exercises: req.body
             }
         },
-        (error, data) => {
-            if (error) {
-              res.send(error);
-            } else {
-              res.send(data);
-            }
-          }
-    )
-    console.log('workout added')
-})
+        {
+            new: true
+        })
+        .then(newExercise => {
+            res.json(newExercise)
+            console.log(newExercise)
+        })
+        .catch((err) => {
+            res.json(err);
+        })
+        console.log('workout added')
+
+    })
 
 
 module.exports = router;
