@@ -21,6 +21,7 @@ router.get("/workouts", (req, res) => {
 
 // GET Workouts from the last 7 days
 router.get("/workouts/range", (req, res) => {
+    console.log('getting workouts for last 7 days')
     db.Workout.aggregate([
         {
             $addFields: {
@@ -34,6 +35,8 @@ router.get("/workouts/range", (req, res) => {
         .limit(7)
         .then((dbWorkouts) => {
             res.json(dbWorkouts);
+            console.log('workouts retrieved')
+
         })
         .catch((err) => {
             res.json(err);
@@ -45,6 +48,10 @@ router.post("/workouts", ({body}, res) => {
     db.Workout.create(body)
     .then(newWorkout => {
         res.json(newWorkout)
+        console.log('Workout created!')
+    })
+    .catch((err) => {
+        res.json(err);
     })
 })
 
